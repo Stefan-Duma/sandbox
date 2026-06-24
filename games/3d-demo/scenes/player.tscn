@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://5vwqada4xxmh"]
+
+[ext_resource type="PackedScene" uid="uid://gitkndytaf7f" path="res://assets/neon_blade_-_sword.glb" id="1_3vyb7"]
+[ext_resource type="Script" uid="uid://bu57e8tyi2tnb" path="res://scripts/player.gd" id="1_g2els"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_8pagb"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_qanwj"]
+
+[node name="Player" type="CharacterBody3D" unique_id=58303610]
+script = ExtResource("1_g2els")
+metadata/_edit_group_ = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1139342551]
+mesh = SubResource("CapsuleMesh_8pagb")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1095217578]
+shape = SubResource("CapsuleShape3D_qanwj")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=187110444]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.55991495)
+
+[node name="Blade" parent="Camera3D" unique_id=768143063 instance=ExtResource("1_3vyb7")]
+transform = Transform3D(-1, -7.691259e-08, 4.155954e-08, 0, 0.47538573, 0.8797775, -8.742278e-08, 0.8797775, -0.47538573, 0.4010221, -0.5267109, -0.39904445)
+
+[node name="RayCast3D" type="RayCast3D" parent="." unique_id=909304819]
+target_position = Vector3(0, -1.5, 0)
