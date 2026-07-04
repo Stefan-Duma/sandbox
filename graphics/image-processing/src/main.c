@@ -2,13 +2,14 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 #include "menu.h"
+#include <stdbool.h>
 
 int main(void)
 {
     init();
     Texture2D* txt;
 
-    while (!WindowShouldClose())
+    while (!should_exit() && !WindowShouldClose())
     {
         txt = get_texture();
         BeginDrawing();
