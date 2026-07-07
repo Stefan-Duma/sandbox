@@ -4,7 +4,7 @@ OBJ = obj
 LIB = lib
 INC = include
 
-CFLAGS = -Wall -Wextra -Iinclude -Llib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+CFLAGS = -g -Wall -Wextra -Iinclude -Llib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 CFILES = $(wildcard ${SRC}/*.c)
 OBJFILES = $(CFILES:.c=.o)

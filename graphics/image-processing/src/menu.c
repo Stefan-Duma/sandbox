@@ -1,7 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "menu.h"
+#include "algo.h"
+
 #include "raygui.h"
-#include <stddef.h>
-#include <stdbool.h>
+
 
 typedef void (*callback)(void);
 
@@ -72,45 +76,15 @@ void load_image_clicked(void) {
 }
 
 void red_filter_clicked(void) {
-    // Returns the total size in bytes of all pixels
-    int bytes = GetPixelDataSize(img.width, img.height, img.format);
-    
-    int px_count = img.width * img.height;
-    int px_size = bytes / px_count;
-    
-    void* px = NULL;
-    for(size_t i = 0; i < px_count; i++) {
-        // Iterate pixel-by-pixel
-        px = (unsigned char*)img.data + px_size * i;
-        Color px_color = GetPixelColor(px, img.format);
-        // Cancel the red channel
-        px_color.r = 0;
-        // Replace that color
-        ImageDrawPixel(&img, i % img.width, i / img.width, px_color);
-    }
-
+    img.data = apply_red_filter(img.data, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
     UnloadTexture(txt);
     txt = LoadTextureFromImage(img);
 }
 
-Color difference(Color c1, Color c2) {
-    
-}
-
 void edge_detection_clicked(void) {
-    int bytes = GetPixelDataSize(img.width, img.height, img.format);
-    
-    int px_count = img.width * img.height;
-    int px_size = bytes / px_count;
-
-    void* px = img.data;
-    void* px_next = NULL;
-    for(size_t i = 1; i < px_count; i++) {
-        px_next = (unsigned char*)img.data + px_size * i;
-        Color px_color = GetPixelColor(px, img.format);
-        Color px_next_color = GetPixelColor(px, img.format);
-
-    }
+    img.data = apply_gaussian_filter(img.data, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
+    UnloadTexture(txt);
+    txt = LoadTextureFromImage(img);
 }
 
 void exit_clicked(void) {

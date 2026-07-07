@@ -7,7 +7,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "algo.h"
 
+// Gaussian Filter
 static const int gf_kernel[5][5] = {
     { 2,  4,  5,  4, 2 },
     { 4,  9, 12,  9, 4 },
@@ -16,106 +19,74 @@ static const int gf_kernel[5][5] = {
     { 2,  4,  5,  4, 2 }
 };
 
-static const float gf_kernel_sum = 159.0f;
+static const int gf_kernel_sum = 159;
 static const int gf_kernel_rows = sizeof(gf_kernel) / sizeof(gf_kernel[0]);
 static const int gf_kernel_cols = sizeof(gf_kernel[0]) / sizeof(gf_kernel[0][0]);
 
-// Basic template
-int* convolution_of_1D(int* f, size_t len_f, int* g, size_t len_g, int* len_out) {
-    *len_out = len_f + len_g - 1;
-    int* out = calloc(*len_out, sizeof(int));
-    for(int i = 0; i < *len_out; i++) {
-        for(int j = 0; j < len_f; j++) {
-            int k = i - j;
-            if( k >= 0 && k < len_g )
-                out[i] += f[j] * g[k];
-        }
+// Sobel Operator
+static const int so_kernel_x[3][3] = {
+    { -1, 0, 1 },
+    { -2, 0, 2 },
+    { -1, 0, 1 }
+};
+
+static const int so_kernel_y[3][3] = {
+    { -1, -2, -1 },
+    {  0,  0,  0 },
+    {  1,  2,  1 }
+};
+
+static const int so_kernel_order = 3;
+
+void* apply_red_filter(void* data, int width, int height, int bytes) {
+    unsigned char* out = calloc(bytes, sizeof(unsigned char));
+    unsigned char* ptr = data;
+    
+    int px_count = width * height;
+    int px_size = bytes / px_count;
+    memcpy(out, ptr, bytes);
+    for(size_t i = 0; i < bytes / px_size; i++) {
+        // R: i * px_size + 0, G: i * px_size + 1, B: i * px_size + 2
+        out[i * px_size] = 0;
     }
 
     return out;
 }
 
-int** convolution_of_2D(int** f, size_t rows_f, size_t cols_f, int** g, size_t rows_g, size_t cols_g) {
-    // Bad for cache alignment, but easy to implement
-    // TODO: Optimize later
-    int** out = calloc(rows_f, sizeof(int*));
-    for(int i = 0; i < rows_f; i++) {
-        out[i] = calloc(cols_f, sizeof(int));
-    }
+// width and height in pixels
+void* apply_gaussian_filter(void* data, int width, int height, int bytes) {
+    unsigned char* out = calloc(bytes, sizeof(unsigned char));
+    unsigned char* ptr = data;
+    
+    int px_count = width * height;
+    int px_size = bytes / px_count;
 
-    int row_radius = rows_g / 2;
-    int col_radius = cols_g / 2;
-    for(int i = 0; i < rows_f; i++) {
-        for(int j = 0; j < cols_f; j++) {
-            int sum = 0;
-            for(int k = 0; k < rows_g; k++) {
-                for(int l = 0; l < cols_g; l++) {
-                    int row = i + k - row_radius;
-                    int col = j + l - col_radius;
-                    
-                    if(row >= 0 && col >= 0 && row < rows_f && col < cols_f) {    
-                        sum += f[row][col] * g[k][l];
-                    }
+    int row_radius = gf_kernel_rows / 2;
+    int col_radius = gf_kernel_cols / 2;
+
+    int rows = height;
+    int cols = width;
+    for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+            for (int ch = 0; ch < px_size; ch++) {
+                int sum = 0;
+                for(int k = 0; k < gf_kernel_rows; k++) {
+                    for(int l = 0; l < gf_kernel_cols; l++) {
+                        int row = i + k - row_radius;
+                        int col = j + l - col_radius;
                         
+                        if(row >= 0 && col >= 0 && row < rows && col < cols) {
+                            int index = (row * cols + col) * px_size + ch;
+                            sum += ptr[index] * gf_kernel[k][l];
+                        }   
+                    }
                 }
+
+                int index = (i * cols + j) * px_size + ch;
+                out[index] = sum / gf_kernel_sum;
             }
-            out[i][j] = sum / gf_kernel_sum;
         }
     }
-
+    
     return out;
 }
-
-int main() {
-    int matrix[][12] = {
-        {  3,  1,  4,  1,  5,  9,  2,  6,  5,  3,  5,  8 },
-        {  9,  7,  9,  3,  2,  3,  8,  4,  6,  2,  6,  4 },
-        {  3,  3,  8,  3,  2,  7,  9,  5,  0,  2,  8,  8 },
-        {  4,  1,  9,  7,  1,  6,  9,  3,  9,  9,  3,  7 },
-        {  5,  1,  0,  5,  8,  2,  0,  9,  7,  4,  9,  4 },
-        {  4,  5,  9,  2,  3,  0,  7,  8,  1,  6,  4,  0 },
-        {  6,  2,  8,  6,  2,  0,  8,  9,  9,  8,  6,  2 },
-        {  8,  0,  3,  4,  8,  2,  5,  3,  4,  2,  1,  1 },
-        {  7,  0,  6,  7,  9,  8,  2,  1,  4,  8,  0,  8 },
-        {  6,  5,  1,  3,  2,  8,  2,  3,  0,  6,  6,  4 },
-        {  7,  0,  9,  3,  8,  4,  4,  6,  0,  9,  5,  5 },
-        {  0,  5,  8,  2,  2,  3,  1,  7,  2,  5,  3,  5 }
-    };
-    
-    int matrix_rows = 12;
-    int matrix_cols = 12;
-
-    float result[12][12] = { { 0 } };
-    
-    int f[] = {1, 2, 3};
-    int g[] = {4, 5, 6};
-    
-    int count;
-    int* out = convolution_of_1D(f, 3, g, 3, &count);
-    for (size_t i = 0; i < count; i++) {
-        printf("%d ", out[i]);
-    }
-    printf("\n");
-    
-
-    int* arg1[12];
-    int* arg2[5];
-    for(int i = 0; i < 12; i++) {
-        arg1[i] = matrix[i];
-    }
-    for(int i = 0; i < 5; i++) {
-        arg2[i] = gf_kernel[i];
-    }
-    int** out2 = convolution_of_2D(arg1, matrix_rows, matrix_cols, arg2, gf_kernel_rows, gf_kernel_cols);
-
-    for(size_t i = 0; i < matrix_rows; i++) {
-        for(size_t j = 0; j < matrix_cols; j++) {
-            printf("%d ", out2[i][j]);
-        }
-        printf("\n");
-    }
-
-    free(out);
-    return 0;
-}
-
