@@ -8,7 +8,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "algo.h"
+
+
+static const float luminance_weights[] = { 0.299, 0.587, 0.114 };
+static const int lw_len = 3;
+static const int threshhold = 127;
 
 // Gaussian Filter
 static const int gf_kernel[5][5] = {
@@ -53,6 +59,38 @@ void* apply_red_filter(void* data, int width, int height, int bytes) {
     return out;
 }
 
+void* apply_binarization(void* data, int width, int height, int bytes) {
+    unsigned char* out = calloc(bytes, sizeof(unsigned char));
+    unsigned char* ptr = data;
+    
+    int px_count = width * height;
+    int px_size = bytes / px_count;
+
+    int rows = height;
+    int cols = width;
+
+    for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+            int sum = 0;
+            for(int ch = 0; ch < lw_len; ch++) {
+                int index = (i * cols + j) * px_size + ch;
+                sum += ptr[index] * luminance_weights[ch];
+            }
+            
+            for(int ch = 0; ch < lw_len; ch++) {
+                int index = (i * cols + j) * px_size + ch;
+                if(sum < threshhold)
+                    out[index] = 0;
+                else
+                    out[index] = 255;
+            }
+        }
+    }
+
+    return out;
+}
+
+
 // width and height in pixels
 void* apply_gaussian_filter(void* data, int width, int height, int bytes) {
     unsigned char* out = calloc(bytes, sizeof(unsigned char));
@@ -88,5 +126,76 @@ void* apply_gaussian_filter(void* data, int width, int height, int bytes) {
         }
     }
     
+    return out;
+}
+
+void* apply_sobel_operator(void* data, int width, int height, int bytes) {
+    unsigned char* out_x = calloc(bytes, sizeof(unsigned char));
+    unsigned char* out_y = calloc(bytes, sizeof(unsigned char));
+    unsigned char* out = calloc(bytes, sizeof(unsigned char));
+    unsigned char* ptr = data;
+    
+    int px_count = width * height;
+    int px_size = bytes / px_count;
+
+    int radius = so_kernel_order / 2;
+
+    int rows = height;
+    int cols = width;
+    for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+            for (int ch = 0; ch < px_size; ch++) {
+                int sum = 0;
+                for(int k = 0; k < so_kernel_order; k++) {
+                    for(int l = 0; l < so_kernel_order; l++) {
+                        int row = i + k - radius;
+                        int col = j + l - radius;
+                        
+                        if(row >= 0 && col >= 0 && row < rows && col < cols) {
+                            int index = (row * cols + col) * px_size + ch;
+                            sum += ptr[index] * so_kernel_x[k][l];
+                        }   
+                    }
+                }
+
+                int index = (i * cols + j) * px_size + ch;
+                out_x[index] = sum;
+            }
+        }
+    }
+    
+    for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+            for (int ch = 0; ch < px_size; ch++) {
+                int sum = 0;
+                for(int k = 0; k < so_kernel_order; k++) {
+                    for(int l = 0; l < so_kernel_order; l++) {
+                        int row = i + k - radius;
+                        int col = j + l - radius;
+                        
+                        if(row >= 0 && col >= 0 && row < rows && col < cols) {
+                            int index = (row * cols + col) * px_size + ch;
+                            sum += ptr[index] * so_kernel_y[k][l];
+                        }   
+                    }
+                }
+
+                int index = (i * cols + j) * px_size + ch;
+                out_y[index] = sum;
+            }
+        }
+    }
+
+    for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+            for (int ch = 0; ch < px_size; ch++) {
+                int index = (i * cols + j) * px_size + ch;
+                int x = out_x[index] * out_x[index];
+                int y = out_y[index] * out_y[index];
+                out[index] = sqrtf(x + y);
+            }
+        }
+    }
+
     return out;
 }

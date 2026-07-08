@@ -82,7 +82,10 @@ void red_filter_clicked(void) {
 }
 
 void edge_detection_clicked(void) {
-    img.data = apply_gaussian_filter(img.data, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
+    void* out = apply_binarization(img.data, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
+    out = apply_gaussian_filter(out, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
+    out = apply_sobel_operator(out, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
+    img.data = out;
     UnloadTexture(txt);
     txt = LoadTextureFromImage(img);
 }
