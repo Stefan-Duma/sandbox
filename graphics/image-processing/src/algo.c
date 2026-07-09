@@ -50,24 +50,20 @@ static const int so_kernel_y[3][3] = {
 
 static const int so_kernel_order = 3;
 
-void* apply_red_filter(void* data, int width, int height, int bytes) {
-    unsigned char* out = calloc(bytes, sizeof(unsigned char));
+void apply_red_filter(void* data, int width, int height, int bytes) {
     unsigned char* ptr = data;
     
     int px_count = width * height;
     int px_size = bytes / px_count;
-    memcpy(out, ptr, bytes);
+    
     for(size_t i = 0; i < bytes / px_size; i++) {
         // R: i * px_size + 0, G: i * px_size + 1, B: i * px_size + 2
-        out[i * px_size + 1] = 0;
-        out[i * px_size + 2] = 0;
+        ptr[i * px_size + 1] = 0;
+        ptr[i * px_size + 2] = 0;
     }
-
-    return out;
 }
 
-void* apply_binarization(void* data, int width, int height, int bytes) {
-    unsigned char* out = calloc(bytes, sizeof(unsigned char));
+void apply_binarization(void* data, int width, int height, int bytes) {
     unsigned char* ptr = data;
     
     int px_count = width * height;
@@ -86,18 +82,15 @@ void* apply_binarization(void* data, int width, int height, int bytes) {
             
             for(int ch = 0; ch < lw_len; ch++) {
                 int index = (i * cols + j) * px_size + ch;
-                out[index] = sum;
+                ptr[index] = sum;
             }
         }
     }
-
-    return out;
 }
 
 
 // width and height in pixels
-void* apply_gaussian_filter(void* data, int width, int height, int bytes) {
-    unsigned char* out = calloc(bytes, sizeof(unsigned char));
+void apply_gaussian_filter(void* data, int width, int height, int bytes) {
     unsigned char* ptr = data;
     
     int px_count = width * height;
@@ -125,18 +118,15 @@ void* apply_gaussian_filter(void* data, int width, int height, int bytes) {
                 }
 
                 int index = (i * cols + j) * px_size + ch;
-                out[index] = sum / gf_kernel_sum;
+                ptr[index] = sum / gf_kernel_sum;
             }
         }
     }
-    
-    return out;
 }
 
-void* apply_sobel_operator(void* data, int width, int height, int bytes) {
+void apply_sobel_operator(void* data, int width, int height, int bytes) {
     signed char* out_x = calloc(bytes, sizeof(signed char));
     signed char* out_y = calloc(bytes, sizeof(signed char));
-    unsigned char* out = calloc(bytes, sizeof(unsigned char));
     unsigned char* ptr = data;
     
     int px_count = width * height;
@@ -220,9 +210,9 @@ void* apply_sobel_operator(void* data, int width, int height, int bytes) {
                     int magse = sqrtf(xse + yse);
 
                     if(magnitude > magnw && magnitude > magse)
-                        out[index] = magnitude;
+                        ptr[index] = magnitude;
                     else
-                        out[index] = 0; 
+                        ptr[index] = 0; 
                 }
                 // rounded to 90
                 else if(theta >= 90 - 22.5 && theta < 135 - 22.5) {
@@ -239,9 +229,9 @@ void* apply_sobel_operator(void* data, int width, int height, int bytes) {
                     int magd = sqrtf(xd + yd);
 
                     if(magnitude > magu && magnitude > magd)
-                        out[index] = magnitude;
+                        ptr[index] = magnitude;
                     else
-                        out[index] = 0; 
+                        ptr[index] = 0; 
                 }
                 // rounded to 135
                 else if(theta >= 135 - 22.5 && theta < 180 - 22.5) {
@@ -258,9 +248,9 @@ void* apply_sobel_operator(void* data, int width, int height, int bytes) {
                     int magsw = sqrtf(xsw + ysw);
 
                     if(magnitude > magne && magnitude > magsw)
-                        out[index] = magnitude;
+                        ptr[index] = magnitude;
                     else
-                        out[index] = 0; 
+                        ptr[index] = 0; 
                 }
                 // rounded to 0
                 else {
@@ -277,14 +267,15 @@ void* apply_sobel_operator(void* data, int width, int height, int bytes) {
                     int magr = sqrtf(xr + yr);
 
                     if(magnitude > magl && magnitude > magr)
-                        out[index] = magnitude;
+                        ptr[index] = magnitude;
                     else
-                        out[index] = 0; 
+                        ptr[index] = 0; 
                 }
                 
             }
         }
     }
 
-    return out;
+    free(out_x);
+    free(out_y);
 }

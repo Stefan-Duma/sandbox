@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <stdlib.h>
+// #include <stdlib.h>
+#include <string.h>
 
 #include "menu.h"
 #include "algo.h"
@@ -14,11 +15,13 @@ void red_filter_clicked(void);
 void edge_detection_clicked(void);
 void exit_clicked(void);
 
-static Image img;
-static Texture2D txt;
+static Image img_src;
+static Image img_dest;
+static Texture2D txt_src;
+static Texture2D txt_dest;
 
-static const int screenWidth = 800;
-static const int screenHeight = 600;
+static const int screenWidth = 1024;
+static const int screenHeight = 768;
 
 static const int button_width = 120;
 static const int button_height = 30;
@@ -62,8 +65,12 @@ void draw_menu(void) {
     }
 }
 
-Texture2D* get_texture(void) {
-    return &txt;
+Texture2D* get_texture_src(void) {
+    return &txt_src;
+}
+
+Texture2D* get_texture_dest(void) {
+    return &txt_dest;
 }
 
 bool should_exit(void) {
@@ -71,23 +78,43 @@ bool should_exit(void) {
 }
 
 void load_image_clicked(void) {
-    img = LoadImage("assets/roswaal.png");
-    txt = LoadTextureFromImage(img);
+    UnloadImage(img_src);
+    UnloadImage(img_dest);
+
+    UnloadTexture(txt_src);
+    UnloadTexture(txt_dest);
+
+    img_src = LoadImage("assets/roswaal.png");
+    txt_src = LoadTextureFromImage(img_src);
+    
+    img_dest = LoadImageFromTexture(txt_src);
+    txt_dest = LoadTextureFromImage(img_dest);
 }
 
 void red_filter_clicked(void) {
-    img.data = apply_red_filter(img.data, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
-    UnloadTexture(txt);
-    txt = LoadTextureFromImage(img);
+    void* ptr = img_dest.data;
+    int bytes = GetPixelDataSize(img_src.width, img_src.height, img_src.format);
+    
+    memcpy(img_dest.data, img_src.data, bytes);
+
+    apply_red_filter(ptr, img_src.width, img_src.height, bytes);
+    
+    UnloadTexture(txt_dest);
+    txt_dest = LoadTextureFromImage(img_dest);
 }
 
 void edge_detection_clicked(void) {
-    void* out = apply_binarization(img.data, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
-    out = apply_gaussian_filter(out, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
-    out = apply_sobel_operator(out, img.width, img.height, GetPixelDataSize(img.width, img.height, img.format));
-    img.data = out;
-    UnloadTexture(txt);
-    txt = LoadTextureFromImage(img);
+    void* ptr = img_dest.data;
+    int bytes = GetPixelDataSize(img_src.width, img_src.height, img_src.format);
+    
+    memcpy(img_dest.data, img_src.data, bytes);
+
+    apply_binarization(ptr, img_src.width, img_src.height, bytes);
+    apply_gaussian_filter(ptr, img_src.width, img_src.height, bytes);
+    apply_sobel_operator(ptr, img_src.width, img_src.height, bytes);
+    
+    UnloadTexture(txt_dest);
+    txt_dest = LoadTextureFromImage(img_dest);
 }
 
 void exit_clicked(void) {
