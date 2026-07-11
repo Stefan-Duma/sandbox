@@ -108,13 +108,21 @@ void edge_detection_clicked(void) {
     int bytes = GetPixelDataSize(img_src.width, img_src.height, img_src.format);
     
     memcpy(img_dest.data, img_src.data, bytes);
-
-    apply_binarization(ptr, img_src.width, img_src.height, bytes);
-    apply_gaussian_filter(ptr, img_src.width, img_src.height, bytes);
-    apply_sobel_operator(ptr, img_src.width, img_src.height, bytes);
     
+    ptr = apply_grayscale(ptr, img_src.width, img_src.height, bytes);
+    ptr = apply_gaussian_filter(ptr, img_src.width, img_src.height);
+    ptr = apply_sobel_operator(ptr, img_src.width, img_src.height);
+    
+    Image img = {
+        .data = ptr,
+        .width = img_src.width,
+        .height = img_src.height,
+        .mipmaps = 1,
+        .format = 1
+    };
+
     UnloadTexture(txt_dest);
-    txt_dest = LoadTextureFromImage(img_dest);
+    txt_dest = LoadTextureFromImage(img);
 }
 
 void exit_clicked(void) {

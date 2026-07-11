@@ -15,3 +15,9 @@
 
 ### Code reference for 1D convolution
 - https://www.geeksforgeeks.org/matlab/linear-convolution-using-c-and-matlab/
+
+## Raylib docs
+- https://www.raylib.com/cheatsheet/cheatsheet.html
+
+## Image docs
+- https://github.com/nothings/stb/blob/master/stb_image.h
