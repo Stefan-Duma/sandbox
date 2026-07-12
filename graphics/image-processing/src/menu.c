@@ -78,14 +78,9 @@ bool should_exit(void) {
 }
 
 void load_image_clicked(void) {
-    UnloadImage(img_src);
-    UnloadImage(img_dest);
-
-    UnloadTexture(txt_src);
-    UnloadTexture(txt_dest);
-
     img_src = LoadImage("assets/roswaal.png");
     txt_src = LoadTextureFromImage(img_src);
+    
     
     img_dest = LoadImageFromTexture(txt_src);
     txt_dest = LoadTextureFromImage(img_dest);
@@ -105,13 +100,14 @@ void red_filter_clicked(void) {
 
 void edge_detection_clicked(void) {
     void* ptr = img_dest.data;
+    
     int bytes = GetPixelDataSize(img_src.width, img_src.height, img_src.format);
     
     memcpy(img_dest.data, img_src.data, bytes);
     
     ptr = apply_grayscale(ptr, img_src.width, img_src.height, bytes);
     ptr = apply_gaussian_filter(ptr, img_src.width, img_src.height);
-    ptr = apply_sobel_operator(ptr, img_src.width, img_src.height);
+    apply_sobel_operator(ptr, img_src.width, img_src.height);
     
     Image img = {
         .data = ptr,
@@ -121,6 +117,7 @@ void edge_detection_clicked(void) {
         .format = 1
     };
 
+    UnloadImage(img_src);
     UnloadTexture(txt_dest);
     txt_dest = LoadTextureFromImage(img);
 }

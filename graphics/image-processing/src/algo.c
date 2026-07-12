@@ -31,7 +31,6 @@ static unsigned char gf_kernel[5][5] = {
     { 2,  4,  5,  4, 2 }
 };
 
-
 static const unsigned char gf_kernel_rows = sizeof(gf_kernel) / sizeof(gf_kernel[0]);
 static const unsigned char gf_kernel_cols = sizeof(gf_kernel[0]) / sizeof(gf_kernel[0][0]);
 static const unsigned char gf_kernel_sum = 159;
@@ -124,10 +123,12 @@ void* apply_gaussian_filter(void* data, int width, int height) {
         }
     }
 
+    free(ptr);
+
     return out;
 }
 
-void* apply_sobel_operator(void* data, int width, int height) {
+void apply_sobel_operator(void* data, int width, int height) {
     int* out_x = calloc(width*height, sizeof(*out_x));
     int* out_y = calloc(width*height, sizeof(*out_y));
     
@@ -256,6 +257,4 @@ void* apply_sobel_operator(void* data, int width, int height) {
 
     free(out_x);
     free(out_y);
-    
-    return ptr;
 }
